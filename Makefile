@@ -8,10 +8,8 @@ CFLAG:=-g
 CFLAG+=-Wall
 CFLAG+=-O1
 
-#SRC:=core.c
-#LIB:=per_cpu.c
-SRC:=src/*.c
-LIB:=lib/*.c
+SRC:=src/core.c
+LIB:=lib/per_cpu.c
 
 OBJ=$(SRC:.c=.o)
 OBJ+=$(LIB:.c=.o)
@@ -21,8 +19,7 @@ OBJ+=$(LIB:.c=.o)
 
 all: static
 	rm -f src/*.o
-	rm -f lib/*.o
-	rm -f *.o
+	rm -f lib/*,o
 
 static: $(OBJ)
 	ar crsv ucsan.a $(OBJ)
