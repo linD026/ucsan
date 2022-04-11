@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 #include <ucsan/per_cpu.h>
 
 int main(void)
