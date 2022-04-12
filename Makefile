@@ -2,7 +2,8 @@ PWD := $(CURDIR)
 
 nr_cpu=1
 
-INC=$(PWD)/include
+ARCH=generic
+INC=$(PWD)/include $(PWD)/arch/$(ARCH)
 INC_PARAMS=$(INC:%=-I%)
 
 CC ?= gcc
