@@ -1,25 +1,15 @@
 #ifndef __COMPILER__
 #define __COMPILER__
 
-#if __STDC_VERSION__ > 201112L
+#if defined(CONFIG_GCC)
 
-#include <stdatomic.h>
-
-#define smp_mb() atomic_thread_fence(memory_order_seq_cst)
-#define smp_rmb() atomic_thread_fence(memory_order_acquire)
-#define smp_wmb() atomic_thread_fence(memory_order_release)
-
-#elif defined(__GNUC__)
-
-#define smp_mb() __atomic_thread_fence(__ATOMIC_SEQ_CST)
-#define smp_rmb() __atomic_thread_fence(__ATOMIC_ACQUIRE)
-#define smp_wmb() __atomic_thread_fence(__ATOMIC_RELEASE)
+#include <gcc-generic.h>
 
 #else
 
 #error "non-support"
 
-#endif /* compiler and stdc version */
+#endif /* GCC or Other compiler config */
 
 /* x86 specific */
 #define COHERENCE_SIZE 128
