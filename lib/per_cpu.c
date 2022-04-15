@@ -7,5 +7,5 @@ void *__per_cpu(void *p, size_t ele_size)
     char *start = (char *)p;
     int cpu = sched_getcpu();
 
-    return start + (cpu * ele_size);
+    return (void *) start + (cpu * ele_size);
 }
