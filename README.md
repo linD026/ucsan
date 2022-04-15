@@ -8,7 +8,7 @@ Build this project with following commands:
 
 ```bash
 $ make                  # Generate static library: libucsan.a
-$ make clean            # Delete germerated files
+$ make clean            # Delete generated files
 ```
 
 ### Makefile Option
