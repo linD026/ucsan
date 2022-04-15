@@ -28,11 +28,11 @@ OBJ+=$(LIB:.c=.o)
 all: static
 
 static: $(OBJ)
-	ar crsv libtsan.a $(OBJ)
-	ranlib libtsan.a
+	ar crsv libucsan.a $(OBJ)
+	ranlib libucsan.a
 
 clean:
-	rm -f tsan.a
+	rm -f libucsan.a
 	rm -f src/*.o
 	rm -f lib/*.o
 

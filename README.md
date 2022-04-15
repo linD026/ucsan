@@ -7,7 +7,7 @@
 Build this project with following commands:
 
 ```bash
-$ make                  # Generate static library: libtsan.a
+$ make                  # Generate static library: libucsan.a
 $ make clean            # Delete germerated files
 ```
 
@@ -18,14 +18,14 @@ $ make clean            # Delete germerated files
 
 ## How to use?
 
-Add the static library `libtsan.a` to your project:
+Add the static library `libucsan.a` to your project:
 
 ```bash
-$ gcc -o main main.c -L/path/to/libtsan.a -ltsan -fsanitize=thread
+$ gcc -o main main.c -L/path/to/libucsan.a -ltsan -fsanitize=thread
 ```
 
-Or you can move the `libtsan.a` to your project directory. Then:
+Or you can move the `libucsan.a` to your project directory. Then:
 
 ```bash
-$ gcc -o main main.c libtsan.a -fsanitize=thread
+$ gcc -o main main.c libucsan.a -fsanitize=thread
 ```
