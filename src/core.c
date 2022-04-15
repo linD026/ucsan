@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <ucsan/per_cpu.h>
 #include <ucsan/compiler.h>
+#include <uapi/ucsan.h>
 #include <stdio.h>
 
 DEFINE_PER_CPU(int, arr);
