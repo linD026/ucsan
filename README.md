@@ -11,7 +11,7 @@ $ make                  # Generate static library: libucsan.a
 $ make clean            # Delete generated files
 ```
 
-### Makefile Option
+### Makefile Parameter 
 
 * `nr_cpu` : number of cpu.
 * `CC` : compiler, gcc or clang.
