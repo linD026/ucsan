@@ -35,6 +35,7 @@ clean:
 	rm -f libucsan.a
 	rm -f src/*.o
 	rm -f lib/*.o
+	rm -f tests/*.o
 
 indent:
 	clang-format -i include/ucsan/*.[ch]
