@@ -8,6 +8,7 @@ INC_PARAMS=$(INC:%=-I%)
 CC := gcc
 CFLAGS+=-Wall
 CFLAGS+=-O1
+# Position Independent Code suitable for use in a shared library.
 CFLAGS+=-fPIC
 CFLAGS+=-D'UCSAN_NR_CPU=$(nr_cpu)'
 
@@ -22,7 +23,7 @@ OBJ=$(SRC:.c=.o)
 OBJ+=$(LIB:.c=.o)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(INC_PARAMS) -fPIC -c $< -o $@
+	$(CC) $(CFLAGS) $(INC_PARAMS) -c $< -o $@
 
 all: static
 
