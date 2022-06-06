@@ -14,6 +14,7 @@ $ make clean            # Delete generated files
 ### Makefile Parameter 
 
 * `nr_cpu` : number of cpu.
+* `nr_wp` : number of watchpoint slot.
 * `CC` : compiler, gcc or clang.
 
 ## How to use?
