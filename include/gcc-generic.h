@@ -8,7 +8,7 @@
 
 #else
 
-#error "CONFIG_GCC seted, but doesn't support it"
+#error "CONFIG_GCC set, but doesn't support it"
 
 #endif
 

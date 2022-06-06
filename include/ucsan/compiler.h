@@ -29,4 +29,8 @@
 	})
 #endif
 
+#define __alias(symbol) __attribute__((__alias__(#symbol)))
+#define _RET_IP_ (unsigned long)__builtin_return_address(0)
+#define __always_inline inline __attribute__((__always_inline__))
+
 #endif /* __COMPILER__ */

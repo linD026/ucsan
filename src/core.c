@@ -1,23 +1,60 @@
 #define _GNU_SOURCE
-#include <ucsan/per_cpu.h>
 #include <ucsan/compiler.h>
 #include <uapi/ucsan.h>
 #include <stdio.h>
 
-DEFINE_PER_CPU(int, arr);
-DEFINE_PER_CPU(int, arrb);
+#define UCSAN_ACCESS_READ 0x0
+#define UCSAN_ACCESS_WRITE 0x1
+#define UCSAN_ACCESS_COMPOUND 0x2
 
-int test_per_cpu(void)
+static __always_inline void check_access(const volatile void *ptr, size_t size,
+					 int type, unsigned long ip)
 {
-	int *per_cpu_p;
+}
 
-	per_cpu_p = per_cpu(arr);
+/*
+ * tsan function - export to the compiler
+ */
 
-	*per_cpu_p = 1234;
+#define DEFINE_TSAN_READ_WRITE(size)                                     \
+	void __tsan_read##size(void *ptr);                               \
+	void __tsan_read##size(void *ptr)                                \
+	{                                                                \
+		check_access(ptr, size, 0, _RET_IP_);                    \
+	}                                                                \
+	void __tsan_unaligned_read##size(void *ptr)                      \
+		__alias(__tsan_read##size);                              \
+	void __tsan_write##size(void *ptr);                              \
+	void __tsan_write##size(void *ptr)                               \
+	{                                                                \
+		check_access(ptr, size, UCSAN_ACCESS_WRITE, _RET_IP_);   \
+	}                                                                \
+	void __tsan_unaligned_write##size(void *ptr)                     \
+		__alias(__tsan_write##size);                             \
+	void __tsan_read_write##size(void *ptr);                         \
+	void __tsan_read_write##size(void *ptr)                          \
+	{                                                                \
+		check_access(ptr, size,                                  \
+			     UCSAN_ACCESS_COMPOUND | UCSAN_ACCESS_WRITE, \
+			     _RET_IP_);                                  \
+	}                                                                \
+	void __tsan_unaligned_read_write##size(void *ptr)                \
+		__alias(__tsan_read_write##size);
 
-	barrier();
+DEFINE_TSAN_READ_WRITE(1);
+DEFINE_TSAN_READ_WRITE(2);
+DEFINE_TSAN_READ_WRITE(4);
+DEFINE_TSAN_READ_WRITE(8);
+DEFINE_TSAN_READ_WRITE(16);
 
-	printf("per cpu: %d %d\n", *per_cpu(arr), sched_getcpu());
+void __tsan_func_entry(void *call_pc)
+{
+}
 
-	return 0;
+void __tsan_func_exit(void *p)
+{
+}
+
+void __tsan_init(void)
+{
 }
