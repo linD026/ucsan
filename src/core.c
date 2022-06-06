@@ -9,15 +9,15 @@ DEFINE_PER_CPU(int, arrb);
 
 int test_per_cpu(void)
 {
-    int *per_cpu_p;
+	int *per_cpu_p;
 
-    per_cpu_p = per_cpu(arr);
+	per_cpu_p = per_cpu(arr);
 
-    *per_cpu_p = 1234;
+	*per_cpu_p = 1234;
 
-    barrier();
+	barrier();
 
-    printf("per cpu: %d %d\n", *per_cpu(arr), sched_getcpu());
+	printf("per cpu: %d %d\n", *per_cpu(arr), sched_getcpu());
 
-    return 0;
+	return 0;
 }

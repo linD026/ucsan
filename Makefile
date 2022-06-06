@@ -39,5 +39,8 @@ clean:
 
 indent:
 	clang-format -i include/ucsan/*.[ch]
+	clang-format -i include/uapi/*.[ch]
+	clang-format -i include/*.[ch]
 	clang-format -i src/*.[ch]
 	clang-format -i lib/*.[ch]
+	clang-format -i tests/*.[ch]

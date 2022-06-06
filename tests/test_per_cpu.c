@@ -3,8 +3,8 @@
 
 int main(void)
 {
-    int a, b;
-    test_per_cpu();
+	int a, b;
+	test_per_cpu();
 
-    return 0;
+	return 0;
 }

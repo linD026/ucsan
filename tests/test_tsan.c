@@ -9,15 +9,15 @@
 
 int main(void)
 {
-    int32_t i32v;
-    
-    printf("[BEFORE] i32v, val=%d, addr=%p\n", i32v, &i32v);
+	int32_t i32v;
 
-    i32v = 0;
+	printf("[BEFORE] i32v, val=%d, addr=%p\n", i32v, &i32v);
 
-    printf("[AFTER] i32v, val=%d, addr=%p\n", i32v, &i32v);
+	i32v = 0;
 
-    tsan_read4((void *) &i32v);
+	printf("[AFTER] i32v, val=%d, addr=%p\n", i32v, &i32v);
 
-    return 0;
+	tsan_read4((void *)&i32v);
+
+	return 0;
 }
