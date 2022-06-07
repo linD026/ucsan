@@ -1,6 +1,4 @@
-#ifndef CONFIG_GCC
-
-#if defined(__GNUC__)
+#ifdef CONFIG_GCC
 
 #define smp_mb() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #define smp_rmb() __atomic_thread_fence(__ATOMIC_ACQUIRE)
@@ -9,7 +7,5 @@
 #else
 
 #error "CONFIG_GCC set, but doesn't support it"
-
-#endif
 
 #endif /* CONFIG_GCC */
