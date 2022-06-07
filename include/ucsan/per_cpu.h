@@ -1,4 +1,5 @@
 #ifndef __PER_CPU__
+#define __PER_CPU__
 
 #include <sched.h>
 
