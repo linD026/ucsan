@@ -1,6 +1,8 @@
 PWD := $(CURDIR)
 
 nr_cpu=1
+# The number of watchpoint slot
+nr_wp=64
 
 INC=$(PWD)/include
 INC_PARAMS=$(INC:%=-I%)
@@ -11,6 +13,7 @@ CFLAGS+=-O1
 # Position Independent Code suitable for use in a shared library.
 CFLAGS+=-fPIC
 CFLAGS+=-D'UCSAN_NR_CPU=$(nr_cpu)'
+CFLAGS+=-D'UCSAN_NR_WATCHPOINT'=$(nr_wp)
 
 ifeq ($(CC), gcc)
 CFLAGS+=-D'CONFIG_GCC=y'
