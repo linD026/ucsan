@@ -1,7 +1,8 @@
 #define _GNU_SOURCE
 #include <ucsan/compiler.h>
 #include <ucsan/encoding.h>
-#include <uapi/ucsan.h>
+#include <ucsan/ucsan.h>
+#include <ucsan/unify.h>
 #include <stdio.h>
 #include <stdatomic.h>
 #include <stdbool.h>
@@ -11,25 +12,6 @@
 #define UCSAN_ACCESS_WRITE 0x1
 #define UCSAN_ACCESS_COMPOUND 0x2
 
-/* In Linux, the page size is 4096 bytes. */
-#define PAGE_SIZE 4096
-#define PAGE_SHIFT 12
-
-/*
- * We first use the page size and address to get the slot of the address reside.
- * Then search all the index of that slot to get the corresponding watchpoint.
- * So the watchpoint data structure, will be like:
- *
- *			      NR_UCSAN_WP (generally is 4096 bytes size)
- *	 		slot 1 [0, 1, 2]
- * 	NR_UCSAN_SLOT	slot 2 [3, 4, 5]
- *  			and so on...
- *
- * NOTE: The UCSAN_NR_WATCHPOINT is from config, we won't use it directly.
- */
-#define NR_UCSAN_SLOT UCSAN_NR_WATCHPOINT
-#define NR_UCSAN_WP (PAGE_SIZE / sizeof(atomic_long))
-#define WP_SLOT(addr) ((addr >> PAGE_SHIFT) % NR_UCSAN_SLOT)
 atomic_long watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
 
 static __always_inline atomic_long *
@@ -87,6 +69,23 @@ find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 	return NULL;
 }
 
+static noinline void setup_watchpoint(const volatile void *ptr, size_t size,
+				      int type, unsigned long ip)
+{
+	const bool is_write = type & UCSAN_ACCESS_WRITE;
+	atomic_long *watchpoint = NULL;
+
+	/* insert the wp */
+
+	/* delay */
+
+	/* check the wp */
+
+	/* report */
+
+	/* remove the wp */
+}
+
 static __always_inline void check_access(const volatile void *ptr, size_t size,
 					 int type, unsigned long ip)
 {
@@ -105,6 +104,19 @@ static __always_inline void check_access(const volatile void *ptr, size_t size,
 	 * TODO: determine the watchpoint created.
 	 * ANd handle the data race detect.
 	 */
+
+	/*
+	 * Since we don't let the volatile access (which will be atomic
+	 * type) to call the check_access(). It doesn't need to check
+	 * the type we access is enable to create the watchpoint.
+	 * In other words, we ignore the check of atomic operation
+	 * (volatile access here), which means we don't do the
+	 * reordering check.
+	 */
+	if (likely(watchpoint == NULL))
+		setup_watchpoint(ptr, size, type, ip);
+	else
+		unify_set_info(ptr, size, type, ip, watchpoint - watchpoints);
 }
 
 /*
@@ -141,6 +153,28 @@ DEFINE_TSAN_READ_WRITE(2);
 DEFINE_TSAN_READ_WRITE(4);
 DEFINE_TSAN_READ_WRITE(8);
 DEFINE_TSAN_READ_WRITE(16);
+
+#define DEFINE_TSAN_VOLATILE_READ_WRITE(size)                 \
+	void __tsan_volatile_read##size(void *ptr);           \
+	void __tsan_volatile_read##size(void *ptr)            \
+	{                                                     \
+		return;                                       \
+	}                                                     \
+	void __tsan_unaligned_volatile_read##size(void *ptr)  \
+		__alias(__tsan_volatile_read##size);          \
+	void __tsan_volatile_write##size(void *ptr);          \
+	void __tsan_volatile_write##size(void *ptr)           \
+	{                                                     \
+		return;                                       \
+	}                                                     \
+	void __tsan_unaligned_volatile_write##size(void *ptr) \
+		__alias(__tsan_volatile_write##size);
+
+DEFINE_TSAN_VOLATILE_READ_WRITE(1);
+DEFINE_TSAN_VOLATILE_READ_WRITE(2);
+DEFINE_TSAN_VOLATILE_READ_WRITE(4);
+DEFINE_TSAN_VOLATILE_READ_WRITE(8);
+DEFINE_TSAN_VOLATILE_READ_WRITE(16);
 
 void __tsan_func_entry(void *call_pc)
 {
