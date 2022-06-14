@@ -2,6 +2,7 @@
 #define __UCSAN_UNIFY_H__
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +18,10 @@ struct access_info {
 };
 
 void unify_set_info(const volatile void *ptr, size_t size, int access_type,
-		     unsigned long ip, int watchpoint_idx);
+		    unsigned long ip, int watchpoint_idx);
+void unify_report(const volatile void *ptr, size_t size, int type,
+		  unsigned long ip, unsigned long old, unsigned long new,
+		  bool changed);
 
 #ifdef __cplusplus
 }

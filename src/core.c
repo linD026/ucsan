@@ -7,6 +7,7 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define UCSAN_ACCESS_READ 0x0
 #define UCSAN_ACCESS_WRITE 0x1
@@ -14,13 +15,10 @@
 
 atomic_long watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
 
-static __always_inline atomic_long *
-find_watchpoint(unsigned long addr, size_t size, bool expect_write)
+static __always_inline unsigned long
+encoded_watchpoint(unsigned long addr, size_t size, bool expect_write)
 {
-	const unsigned long slot = WP_SLOT(addr);
 	unsigned long addr_masked = 0;
-	atomic_long *watchpoint = NULL;
-	int i;
 
 	/*
 	 * First, we create the wp type of value from the paramters.
@@ -51,6 +49,37 @@ find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 		addr_masked |= WATCHPOINT_WRITE_MASK;
 	addr_masked |= addr & WATCHPOINT_ADDR_MASK;
 
+	return addr_masked;
+}
+
+static inline atomic_long *insert_watchpoint(unsigned long addr_masked)
+{
+	const unsigned long slot = WP_SLOT(addr_masked & WATCHPOINT_ADDR_MASK);
+	atomic_long *watchpoint = NULL;
+	long invalid_watchpoint = 0;
+	unsigned int i;
+
+	for (i = 0; i < NR_UCSAN_WP; i++) {
+		/* We get the address of index first */
+		watchpoint = &watchpoints[slot + i];
+		/* if the watchpoint doesn't used, register it. */
+		if (atomic_compare_exchange_strong(
+			    watchpoint, &invalid_watchpoint, addr_masked))
+			return watchpoint;
+	}
+	return NULL;
+}
+
+static __always_inline atomic_long *
+find_watchpoint(unsigned long addr, size_t size, bool expect_write)
+{
+	const unsigned long slot = WP_SLOT(addr);
+	unsigned long addr_masked = 0;
+	atomic_long *watchpoint = NULL;
+	int i;
+
+	addr_masked = encoded_watchpoint(addr, size, expect_write);
+
 	/*
 	 * We set up the addr_masked, now we can travel the slots to find the
 	 * corresponding watchpoint.
@@ -72,18 +101,26 @@ find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 static noinline void setup_watchpoint(const volatile void *ptr, size_t size,
 				      int type, unsigned long ip)
 {
-	const bool is_write = type & UCSAN_ACCESS_WRITE;
 	atomic_long *watchpoint = NULL;
+	unsigned long old, new;
 
 	/* insert the wp */
+	old = encoded_watchpoint(
+		(unsigned long)ptr, size,
+		(type == (UCSAN_ACCESS_WRITE | UCSAN_ACCESS_COMPOUND)));
+	watchpoint = insert_watchpoint(old);
 
-	/* delay */
+	/* delay 80 ms, which reference from linux kernel default config */
+	usleep(80U);
 
-	/* check the wp */
-
-	/* report */
+	/* check the wp and report */
+	new = atomic_load(watchpoint);
+	if (old ^ new)
+		unify_report(ptr, size, type, ip, old, new,
+			     (old | WATCHPOINT_CONSUMED_MASK) & new);
 
 	/* remove the wp */
+	atomic_store(watchpoint, 0);
 }
 
 static __always_inline void check_access(const volatile void *ptr, size_t size,
@@ -96,9 +133,9 @@ static __always_inline void check_access(const volatile void *ptr, size_t size,
 	 *  WATCHPOINT_CONSUMED_MASK flag).
 	 *  Otherwise it will return NULL.
 	 */
-	watchpoint = find_watchpoint((unsigned long)ptr, size,
-				     (type == UCSAN_ACCESS_WRITE |
-				      UCSAN_ACCESS_COMPOUND));
+	watchpoint = find_watchpoint(
+		(unsigned long)ptr, size,
+		(type == (UCSAN_ACCESS_WRITE | UCSAN_ACCESS_COMPOUND)));
 
 	/*
 	 * TODO: determine the watchpoint created.

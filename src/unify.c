@@ -1,5 +1,6 @@
 #include <ucsan/unify.h>
 #include <ucsan/ucsan.h>
+#include <stdbool.h>
 
 // TODO: Should we use the cpp file?
 
@@ -28,7 +29,7 @@ static void unify_add_info(struct access_info *ai, struct cached_info *ci)
 }
 
 void unify_set_info(const volatile void *ptr, size_t size, int access_type,
-		     unsigned long ip, int watchpoint_idx)
+		    unsigned long ip, int watchpoint_idx)
 {
 	/* create access_info structure */
 	struct access_info ai = {
@@ -42,4 +43,11 @@ void unify_set_info(const volatile void *ptr, size_t size, int access_type,
 
 	/* Add to the structure */
 	unify_add_info(&ai, &cached_info[watchpoint_idx]);
+}
+
+// TODO: check the access type of each task
+void unify_report(const volatile void *ptr, size_t size, int type,
+		  unsigned long ip, unsigned long old, unsigned long new,
+		  bool changed)
+{
 }
