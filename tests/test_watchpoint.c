@@ -7,6 +7,9 @@
 
 #include "printut.h"
 
+#undef __FILE_NAME__
+#define __FILE_NAME__ "tests/test_watchpoint.c"
+
 extern atomic_long watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
 
 void unify_set_info(const volatile void *ptr, size_t size, int access_type,

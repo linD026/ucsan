@@ -14,6 +14,7 @@ CFLAGS+=-O1
 CFLAGS+=-fPIC
 CFLAGS+=-D'UCSAN_NR_CPU=$(nr_cpu)'
 CFLAGS+=-D'UCSAN_NR_WATCHPOINT'=$(nr_wp)
+CFLAGS+=-D BASE_FILE_NAME=\"$*.c\"
 
 ifeq ($(CC), gcc)
 CFLAGS+=-D'CONFIG_GCC=y'

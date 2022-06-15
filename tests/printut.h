@@ -17,14 +17,21 @@ static inline unsigned long __get_ms(void)
 #define __stringlfy(s) #s
 
 /*
- * For only get the file name gcc use __BASE_FILE__, clang use __FILE_NAME__.
- * Otherwire use -D BASE_FILE_NAME=\"$*.c\" in the GNU make.
+ * For only get the file name gcc use __FILE_NAME__, clang use __FILE_NAME__.
+ * Otherwire use -D __FILE_NAME__=\"$*.c\" in the GNU make.
+ * But it will get the original file not the test suit file.
+ * So here we use self-defined macro __FILE_NAME__.
+ * To prevent the compile error, we set the default value of __FILE_NAME__.
+ * When we want to use the __FILE_NAME__ we can undefine it and define our
+ * own name.
  */
+
+#define __FILE_NAME__ __FILE__
 
 #define pr_err(fmt, ...)                                               \
 	do {                                                           \
 		fprintf(stderr, " [%-10lu] ERROR: %s:%d:%s(): " fmt,   \
-			__get_ms(), __BASE_FILE__, __LINE__, __func__, \
+			__get_ms(), __FILE_NAME__, __LINE__, __func__, \
 			##__VA_ARGS__);                                \
 	} while (0)
 
@@ -32,16 +39,16 @@ static inline unsigned long __get_ms(void)
 	do {                                                               \
 		unsigned long __ms = __get_ms();                           \
 		printf(" [%-10lu] INFO: %s:%d:%s(): " fmt, __ms,           \
-		       __BASE_FILE__, __LINE__, __func__, ##__VA_ARGS__);  \
+		       __FILE_NAME__, __LINE__, __func__, ##__VA_ARGS__);  \
 		fprintf(stderr, " [%-10lu] INFO: %s+%d:%s(): " fmt, __ms,  \
-			__BASE_FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+			__FILE_NAME__, __LINE__, __func__, ##__VA_ARGS__); \
 	} while (0)
 
 #define BUG_ON(cond)                                                          \
 	do {                                                                  \
 		if (cond) {                                                   \
 			printf(" [%-10lu] BUG: %s:%d:%s(): %s\n", __get_ms(), \
-			       __BASE_FILE__, __LINE__, __func__,             \
+			       __FILE_NAME__, __LINE__, __func__,             \
 			       __stringlfy(cond));                            \
 			assert(cond);                                         \
 		}                                                             \
