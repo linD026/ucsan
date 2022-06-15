@@ -20,6 +20,7 @@ CFLAGS+=-D'CONFIG_GCC=y'
 endif
 
 SRC:=src/core.c
+SRC+=src/unify.c
 LIB:=lib/per_cpu.c
 
 OBJ=$(SRC:.c=.o)
