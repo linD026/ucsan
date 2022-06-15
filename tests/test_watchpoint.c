@@ -21,7 +21,8 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 		  unsigned long ip, unsigned long old, unsigned long new,
 		  bool changed)
 {
-	unsigned long encoded = encode_watchpoint((unsigned long)ptr, size, type_expect_write(type));
+	unsigned long encoded = encode_watchpoint((unsigned long)ptr, size,
+						  type_expect_write(type));
 	pr_info("ptr=%p, size=%zu, type=%d, ip=%lu, old=%lx, new=%lx, changed=%d\n",
 		ptr, size, type, ip, old, new, changed);
 
@@ -31,7 +32,7 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 		pr_err("old(%lx) == new(%lx)\n", old, new);
 	if (!(changed && (old | WATCHPOINT_CONSUMED_MASK) & new))
 		pr_err("old(%lx) | WATCHPOINT_CONSUMED_MASK (%lx) != new(%lx)\n",
-			old, old | WATCHPOINT_CONSUMED_MASK, new);
+		       old, old | WATCHPOINT_CONSUMED_MASK, new);
 }
 
 struct test_setup_report_struct {
