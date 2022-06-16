@@ -54,15 +54,16 @@ static inline atomic_long *insert_watchpoint(unsigned long addr, size_t size,
 	const unsigned long slot = WP_SLOT(addr);
 	unsigned long addr_masked = encode_watchpoint(addr, size, expect_write);
 	atomic_long *watchpoint = NULL;
-	long invalid_watchpoint = 0;
 	unsigned int i;
 
 	for (i = 0; i < NR_UCSAN_WP; i++) {
+		unsigned long invalid_watchpoint = 0;
+
 		/* We get the address of index first */
 		watchpoint = &watchpoints[slot + i];
 		/* if the watchpoint doesn't used, register it. */
-		if (atomic_compare_exchange_strong(
-			    watchpoint, &invalid_watchpoint, addr_masked))
+		if (atomic_compare_exchange_strong(watchpoint, &invalid_watchpoint,
+						   addr_masked))
 			return watchpoint;
 	}
 	return NULL;
@@ -72,7 +73,8 @@ static __always_inline atomic_long *
 find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 {
 	const unsigned long slot = WP_SLOT(addr);
-	unsigned long addr_masked = encode_watchpoint(addr, size, expect_write);
+	const unsigned long addr_masked =
+		encode_watchpoint(addr, size, expect_write);
 	atomic_long *watchpoint = NULL;
 	int i;
 
@@ -81,11 +83,13 @@ find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 	 * corresponding watchpoint.
 	 */
 	for (i = 0; i < NR_UCSAN_WP; i++) {
+		unsigned long temp = addr_masked;
+
 		/* We get the address of index first */
 		watchpoint = &watchpoints[slot + i];
 		/* if the watchpoint is what we want, consume it. */
 		if (atomic_compare_exchange_strong(
-			    watchpoint, &addr_masked,
+			    watchpoint, &temp,
 			    addr_masked | WATCHPOINT_CONSUMED_MASK))
 			return watchpoint;
 	}
