@@ -108,21 +108,16 @@ function detect {
 	./watchpoint 2> detect.log
 
 	# Check " ERROR:" string and the count
-	local error_count=$(cat detect.log | egrep -c " ERROR:")
-	if [ $error_count -gt 0 ]; then
-
-		# Test failed
-		echo ""
-		echo " detect subsystem test failed: $error_count error(s) "
-		for_each_line "    " detect.log
+	report_log "detect subsystem" detect.log
+	if [[ $? -eq 1 ]]; then
 
 		# Remove the generated file
 		rm -f detect.log
 		rm -f watchpoint
-		make -C $DIR clean quiet=1 --no-print-directory
 		print_unit_name "detect"
+		make -C $DIR clean quiet=1 --no-print-directory
 
-		# exit 1 will general error to shell
+		# exit 1 will general errors
 		exit 1
 	fi
 

@@ -22,6 +22,24 @@ function print_unit_name() {
 	echo ""
 }
 
+# name log
+function report_log() {
+	local name=$1
+	local log=$2
+
+	local error_count=$(cat $log | egrep -c " ERROR:")
+	local have_bug=$(cat $log | egrep -c " BUG:")
+	if [ $error_count -gt 0 ] || [ $have_bug -gt 0 ]; then
+		echo ""
+		echo " $name test failed: $error_count error(s) "
+		for_each_line "    " $log
+
+		return 1
+	fi
+
+	return 0
+}
+
 # unit test function define here
 
 function detect {
@@ -36,19 +54,14 @@ function detect {
 	./watchpoint 2> detect.log
 
 	# Check " ERROR:" string and the count
-	local error_count=$(cat detect.log | egrep -c " ERROR:")
-	if [ $error_count -gt 0 ]; then
-
-		# Test failed
-		echo ""
-		echo " detect subsystem test failed: $error_count error(s) "
-		for_each_line "    " detect.log
+	report_log "detect subsystem" detect.log
+	if [[ $? -eq 1 ]]; then
 
 		# Remove the generated file
 		rm -f detect.log
 		rm -f watchpoint
-		make -C $DIR clean quiet=1 --no-print-directory
 		print_unit_name "detect"
+		make -C $DIR clean quiet=1 --no-print-directory
 
 		# exit 1 will general errors
 		exit 1
