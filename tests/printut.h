@@ -40,7 +40,7 @@ static inline unsigned long __get_ms(void)
 		unsigned long __ms = __get_ms();                           \
 		printf(" [%-10lu] %s:%d:%s(): " fmt, __ms, __FILE_NAME__,  \
 		       __LINE__, __func__, ##__VA_ARGS__);                 \
-		fprintf(stderr, " [%-10lu] INFO: %s+%d:%s(): " fmt, __ms,  \
+		fprintf(stderr, " [%-10lu] INFO: %s:%d:%s(): " fmt, __ms,  \
 			__FILE_NAME__, __LINE__, __func__, ##__VA_ARGS__); \
 	} while (0)
 

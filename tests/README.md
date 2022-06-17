@@ -24,7 +24,7 @@ a - tests/test_watchpoint.o
 ./unit_test.sh: line 27: 206834 Aborted                 (core dumped) ./watchpoint 2> detect.log
 
  detect subsystem test failed: 1 error(s) 
-     [1655330692817227] INFO: tests/test_watchpoint.c+128:test_dummy(): Hello world!
+     [1655330692817227] INFO: tests/test_watchpoint.c:128:test_dummy(): Hello world!
      [1655330692817300] ERROR: tests/test_watchpoint.c:131:test_dummy(): Here is the error.
      [1655330692817303] BUG: tests/test_watchpoint.c:142:main(): test_dummy() failed
 
