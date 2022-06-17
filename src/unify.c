@@ -47,7 +47,7 @@ void unify_set_info(const volatile void *ptr, size_t size, int access_type,
 
 // TODO: check the access type of each task
 void unify_report(const volatile void *ptr, size_t size, int type,
-		  unsigned long ip, unsigned long old, unsigned long new,
-		  bool changed)
+		  unsigned long ip, unsigned long old_value,
+		  unsigned long new_value)
 {
 }

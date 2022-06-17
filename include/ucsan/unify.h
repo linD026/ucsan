@@ -20,8 +20,8 @@ struct access_info {
 void unify_set_info(const volatile void *ptr, size_t size, int access_type,
 		    unsigned long ip, int watchpoint_idx);
 void unify_report(const volatile void *ptr, size_t size, int type,
-		  unsigned long ip, unsigned long old, unsigned long new,
-		  bool changed);
+		  unsigned long ip, unsigned long old_value,
+		  unsigned long new_value);
 
 #ifdef __cplusplus
 }

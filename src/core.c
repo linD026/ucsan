@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-atomic_long watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
+atomic_ulong watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
 
 static __always_inline unsigned long
 encode_watchpoint(unsigned long addr, size_t size, bool expect_write)
@@ -48,34 +48,35 @@ encode_watchpoint(unsigned long addr, size_t size, bool expect_write)
 	return addr_masked;
 }
 
-static inline atomic_long *insert_watchpoint(unsigned long addr, size_t size,
-					     bool expect_write)
+static inline atomic_ulong *insert_watchpoint(unsigned long addr, size_t size,
+					      bool expect_write)
 {
 	const unsigned long slot = WP_SLOT(addr);
 	unsigned long addr_masked = encode_watchpoint(addr, size, expect_write);
-	atomic_long *watchpoint = NULL;
+	atomic_ulong *watchpoint = NULL;
 	unsigned int i;
 
 	for (i = 0; i < NR_UCSAN_WP; i++) {
-		unsigned long invalid_watchpoint = 0;
+		unsigned long invalid_watchpoint = WATCHPOINT_INVALID;
 
 		/* We get the address of index first */
 		watchpoint = &watchpoints[slot + i];
 		/* if the watchpoint doesn't used, register it. */
-		if (atomic_compare_exchange_strong(watchpoint, &invalid_watchpoint,
-						   addr_masked))
+		if (atomic_compare_exchange_strong(
+			    watchpoint, &invalid_watchpoint, addr_masked))
 			return watchpoint;
 	}
 	return NULL;
 }
 
-static __always_inline atomic_long *
+static __always_inline atomic_ulong *
 find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 {
 	const unsigned long slot = WP_SLOT(addr);
 	const unsigned long addr_masked =
 		encode_watchpoint(addr, size, expect_write);
-	atomic_long *watchpoint = NULL;
+	unsigned long encoded_watchpoint;
+	atomic_ulong *watchpoint = NULL;
 	int i;
 
 	/*
@@ -83,14 +84,17 @@ find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 	 * corresponding watchpoint.
 	 */
 	for (i = 0; i < NR_UCSAN_WP; i++) {
-		unsigned long temp = addr_masked;
-
 		/* We get the address of index first */
 		watchpoint = &watchpoints[slot + i];
-		/* if the watchpoint is what we want, consume it. */
-		if (atomic_compare_exchange_strong(
-			    watchpoint, &temp,
-			    addr_masked | WATCHPOINT_CONSUMED_MASK))
+		encoded_watchpoint =
+			atomic_load_explicit(watchpoint, memory_order_relaxed);
+
+		/*
+		 * Match two watchpoint
+		 * Here we only do the same size and adress check.
+		 * We don't check the range of object for simplify the mechanism
+		 */
+		if (encoded_watchpoint == addr_masked)
 			return watchpoint;
 	}
 
@@ -101,32 +105,39 @@ find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 static noinline void setup_watchpoint(const volatile void *ptr, size_t size,
 				      int type, unsigned long ip)
 {
-	atomic_long *watchpoint = NULL;
-	unsigned long old, new;
+	atomic_ulong *watchpoint = NULL;
+	unsigned long old_value, new_value;
+
+	old_value = (unsigned long)atomic_load_explicit((unsigned long *)ptr,
+							memory_order_relaxed);
 
 	/* insert the wp */
-	old = encode_watchpoint((unsigned long)ptr, size,
-				type_expect_write(type));
+
 	watchpoint = insert_watchpoint((unsigned long)ptr, size,
 				       type_expect_write(type));
 
 	/* delay 80 ms, which reference from linux kernel default config */
 	usleep(80U);
 
-	/* check the wp and report */
-	new = atomic_load(watchpoint);
-	if (old ^ new)
-		unify_report(ptr, size, type, ip, old, new,
-			     (old | WATCHPOINT_CONSUMED_MASK) & new);
+	new_value = (unsigned long)atomic_load_explicit((unsigned long *)ptr,
+							memory_order_relaxed);
+	/* If value change, report it */
+	if (old_value ^ new_value) {
+		/* Consume the watchpoint */
+		atomic_exchange(watchpoint, WATCHPOINT_CONSUMED);
+
+		/* Report to unify */
+		unify_report(ptr, size, type, ip, old_value, new_value);
+	}
 
 	/* remove the wp */
-	atomic_store(watchpoint, 0);
+	atomic_store(watchpoint, WATCHPOINT_INVALID);
 }
 
 static __always_inline void check_access(const volatile void *ptr, size_t size,
 					 int type, unsigned long ip)
 {
-	atomic_long *watchpoint;
+	atomic_ulong *watchpoint;
 
 	/*
 	 * If the watchpoint found, it will consume the wacthpoint (set the
