@@ -9,14 +9,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define UCSAN_ACCESS_READ 0x0
-#define UCSAN_ACCESS_WRITE 0x1
-#define UCSAN_ACCESS_COMPOUND 0x2
-
 atomic_long watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
 
 static __always_inline unsigned long
-encoded_watchpoint(unsigned long addr, size_t size, bool expect_write)
+encode_watchpoint(unsigned long addr, size_t size, bool expect_write)
 {
 	unsigned long addr_masked = 0;
 
@@ -52,9 +48,11 @@ encoded_watchpoint(unsigned long addr, size_t size, bool expect_write)
 	return addr_masked;
 }
 
-static inline atomic_long *insert_watchpoint(unsigned long addr_masked)
+static inline atomic_long *insert_watchpoint(unsigned long addr, size_t size,
+					     bool expect_write)
 {
-	const unsigned long slot = WP_SLOT(addr_masked & WATCHPOINT_ADDR_MASK);
+	const unsigned long slot = WP_SLOT(addr);
+	unsigned long addr_masked = encode_watchpoint(addr, size, expect_write);
 	atomic_long *watchpoint = NULL;
 	long invalid_watchpoint = 0;
 	unsigned int i;
@@ -74,11 +72,9 @@ static __always_inline atomic_long *
 find_watchpoint(unsigned long addr, size_t size, bool expect_write)
 {
 	const unsigned long slot = WP_SLOT(addr);
-	unsigned long addr_masked = 0;
+	unsigned long addr_masked = encode_watchpoint(addr, size, expect_write);
 	atomic_long *watchpoint = NULL;
 	int i;
-
-	addr_masked = encoded_watchpoint(addr, size, expect_write);
 
 	/*
 	 * We set up the addr_masked, now we can travel the slots to find the
@@ -105,10 +101,10 @@ static noinline void setup_watchpoint(const volatile void *ptr, size_t size,
 	unsigned long old, new;
 
 	/* insert the wp */
-	old = encoded_watchpoint(
-		(unsigned long)ptr, size,
-		(type == (UCSAN_ACCESS_WRITE | UCSAN_ACCESS_COMPOUND)));
-	watchpoint = insert_watchpoint(old);
+	old = encode_watchpoint((unsigned long)ptr, size,
+				type_expect_write(type));
+	watchpoint = insert_watchpoint((unsigned long)ptr, size,
+				       type_expect_write(type));
 
 	/* delay 80 ms, which reference from linux kernel default config */
 	usleep(80U);
@@ -133,9 +129,8 @@ static __always_inline void check_access(const volatile void *ptr, size_t size,
 	 *  WATCHPOINT_CONSUMED_MASK flag).
 	 *  Otherwise it will return NULL.
 	 */
-	watchpoint = find_watchpoint(
-		(unsigned long)ptr, size,
-		(type == (UCSAN_ACCESS_WRITE | UCSAN_ACCESS_COMPOUND)));
+	watchpoint = find_watchpoint((unsigned long)ptr, size,
+				     type_expect_write(type));
 
 	/*
 	 * TODO: determine the watchpoint created.
@@ -224,3 +219,6 @@ void __tsan_func_exit(void *p)
 void __tsan_init(void)
 {
 }
+
+#define __UT_DETECT
+#include <unit_test.h>

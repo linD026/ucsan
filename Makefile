@@ -14,6 +14,7 @@ CFLAGS+=-O1
 CFLAGS+=-fPIC
 CFLAGS+=-D'UCSAN_NR_CPU=$(nr_cpu)'
 CFLAGS+=-D'UCSAN_NR_WATCHPOINT'=$(nr_wp)
+CFLAGS+=-D BASE_FILE_NAME=\"$*.c\"
 
 ifeq ($(CC), gcc)
 CFLAGS+=-D'CONFIG_GCC=y'
@@ -22,9 +23,15 @@ endif
 SRC:=src/core.c
 SRC+=src/unify.c
 LIB:=lib/per_cpu.c
+TEST:=tests/test_watchpoint.c
 
 OBJ=$(SRC:.c=.o)
 OBJ+=$(LIB:.c=.o)
+
+ifeq ($(test), 1)
+CFLAGS+=-lpthread
+OBJ+=$(TEST:.c=.o)
+endif
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INC_PARAMS) -c $< -o $@
@@ -48,3 +55,7 @@ indent:
 	clang-format -i src/*.[ch]
 	clang-format -i lib/*.[ch]
 	clang-format -i tests/*.[ch]
+
+ifeq ($(quiet), 1)
+.SILENT:
+endif
