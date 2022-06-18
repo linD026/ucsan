@@ -11,15 +11,16 @@
  *
  *   - tasn read/write operation : 1 bit
  *   - object size		 : 5 bits for 1,2,4,8,16 size
- *   - consumed			 : 1 bit
  */
-#define WATCHPOINT_ADDR_MASK ((1UL << 56) - 1)
-#define WATCHPOINT_CONSUMED_MASK (1UL << 56)
-#define WATCHPOINT_SIZE_1 (1UL << 57)
-#define WATCHPOINT_SIZE_2 (1UL << 58)
-#define WATCHPOINT_SIZE_4 (1UL << 59)
-#define WATCHPOINT_SIZE_8 (1UL << 60)
-#define WATCHPOINT_SIZE_16 (1UL << 61)
-#define WATCHPOINT_WRITE_MASK (1UL << 62)
+#define WATCHPOINT_ADDR_MASK ((1UL << 57) - 1)
+#define WATCHPOINT_SIZE_1 (1UL << 58)
+#define WATCHPOINT_SIZE_2 (1UL << 59)
+#define WATCHPOINT_SIZE_4 (1UL << 60)
+#define WATCHPOINT_SIZE_8 (1UL << 61)
+#define WATCHPOINT_SIZE_16 (1UL << 62)
+#define WATCHPOINT_WRITE_MASK (1UL << 63)
+
+#define WATCHPOINT_CONSUMED 1UL
+#define WATCHPOINT_INVALID 0UL
 
 #endif /* __UCSAN_ENCODING_H__ */

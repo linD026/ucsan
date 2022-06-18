@@ -10,41 +10,63 @@
 #undef __FILE_NAME__
 #define __FILE_NAME__ "tests/test_watchpoint.c"
 
-extern atomic_long watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
+extern atomic_ulong watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
 
-void unify_set_info(const volatile void *ptr, size_t size, int access_type,
-		    unsigned long ip, int watchpoint_idx)
-{
-}
-
-void unify_report(const volatile void *ptr, size_t size, int type,
-		  unsigned long ip, unsigned long old, unsigned long new,
-		  bool changed)
-{
-	unsigned long encoded = encode_watchpoint((unsigned long)ptr, size,
-						  type_expect_write(type));
-	pr_info("ptr=%p, size=%zu, type=%d, ip=%lu, old=%lx, new=%lx, changed=%d\n",
-		ptr, size, type, ip, old, new, changed);
-
-	if (encoded != old)
-		pr_err("encoded(%lx) != old(%lx)\n", encoded, old);
-	if (old == new)
-		pr_err("old(%lx) == new(%lx)\n", old, new);
-	if (!(changed && (old | WATCHPOINT_CONSUMED_MASK) & new))
-		pr_err("old(%lx) | WATCHPOINT_CONSUMED_MASK (%lx) != new(%lx)\n",
-		       old, old | WATCHPOINT_CONSUMED_MASK, new);
-}
-
+int test_setup_foo;
+atomic_int test_setup_flag;
 struct test_setup_report_struct {
 	void *ptr;
 	size_t size;
 	int type;
+	unsigned long ip;
 };
+struct test_setup_report_struct tsrs, unify_tsrs;
+
+void unify_set_info(const volatile void *ptr, size_t size, int access_type,
+		    unsigned long ip, int watchpoint_idx)
+{
+	unify_tsrs.ptr = (void *)ptr;
+	unify_tsrs.size = size;
+	unify_tsrs.type = access_type;
+	unify_tsrs.ip = ip;
+}
+
+void unify_report(const volatile void *ptr, size_t size, int type,
+		  unsigned long ip, unsigned long old_value,
+		  unsigned long new_value)
+{
+	unsigned long encoded = encode_watchpoint((unsigned long)ptr, size,
+						  type_expect_write(type));
+
+	pr_info("ptr=%p, size=%zu, type=%d, ip=%lu, old_value=%lx, new_value=%lx, encoded_watchpoint=%lx\n",
+		ptr, size, type, ip, old_value, new_value, encoded);
+
+#define check_match(utsrs_val, val, fmt)                                   \
+	do {                                                               \
+		if (unify_tsrs.utsrs_val != val)                           \
+			pr_err("unify_tsrs.utsrs_val(" fmt ") != val(" fmt \
+			       ")\n",                                      \
+			       unify_tsrs.utsrs_val, val);                 \
+	} while (0)
+
+	check_match(ptr, ptr, "%p");
+	check_match(size, size, "%zu");
+	check_match(ip, ip, "%lx");
+	check_match(type, type, "%x");
+
+#undef check_match
+	if (old_value == new_value)
+		pr_err("old_value(%lx) == new_value(%lx)\n", old_value,
+		       new_value);
+}
 
 int test_setup_report_thread(void *arg)
 {
 	struct test_setup_report_struct *tsrs = arg;
-	atomic_long *watchpoint;
+	atomic_ulong *watchpoint;
+	int idx;
+
+	*(int *)tsrs->ptr = 1;
 
 again:
 	watchpoint = find_watchpoint((unsigned long)tsrs->ptr, tsrs->size,
@@ -52,31 +74,33 @@ again:
 	if (watchpoint == NULL)
 		goto again;
 
-	pr_info("ptr=%p size=%zu type=%x, watchpoint=(idx=%ld,%p)\n", tsrs->ptr,
-		tsrs->size, tsrs->type, watchpoint - watchpoints,
-		(void *)watchpoint);
+	idx = watchpoint - watchpoints;
+
+	pr_info("ptr=%p size=%zu type=%x, watchpoint=(idx=%d,%p)\n", tsrs->ptr,
+		tsrs->size, tsrs->type, idx, (void *)watchpoint);
+
+	unify_set_info(tsrs->ptr, tsrs->size, tsrs->type, tsrs->ip, idx);
 
 	return 0;
 }
 
 static int test_setup_report(void)
 {
-	int foo;
-	void *ptr = &foo;
-	size_t size = sizeof(__typeof__(foo));
-	int type = UCSAN_ACCESS_WRITE;
+	void *ptr = &test_setup_foo;
+	const size_t size = sizeof(__typeof__(test_setup_foo));
+	const int type = UCSAN_ACCESS_WRITE;
+	const unsigned long ip = 12345;
 	thrd_t p;
-	struct test_setup_report_struct *tsrs =
-		malloc(sizeof(struct test_setup_report_struct));
 
-	BUG_ON(tsrs == NULL);
-	tsrs->ptr = ptr;
-	tsrs->size = size;
-	tsrs->type = type;
-	thrd_create(&p, test_setup_report_thread, (void *)tsrs);
+	tsrs.ptr = ptr;
+	tsrs.size = size;
+	tsrs.type = type;
+	tsrs.ip = ip;
+
+	thrd_create(&p, test_setup_report_thread, (void *)&tsrs);
 
 	pr_info("ptr=%p size=%zu type=%x\n", ptr, size, type);
-	setup_watchpoint(ptr, size, type, 12345);
+	setup_watchpoint(ptr, size, type, ip);
 
 	thrd_join(p, NULL);
 
@@ -90,8 +114,8 @@ static int test_insert_find_watchpoint(void)
 	size_t size = sizeof(__typeof__(foo));
 	int type = UCSAN_ACCESS_WRITE;
 	unsigned long old = 0, new = 0;
-	atomic_long *watchpoint = NULL;
-	atomic_long *found_wp = NULL;
+	atomic_ulong *watchpoint = NULL;
+	atomic_ulong *found_wp = NULL;
 
 	old = encode_watchpoint((unsigned long)ptr, size,
 				type_expect_write(type));
@@ -112,7 +136,7 @@ static int test_insert_find_watchpoint(void)
 		       found_wp - watchpoints, (void *)found_wp);
 
 	new = atomic_load(found_wp);
-	if ((old | WATCHPOINT_CONSUMED_MASK) != new)
+	if (old != new)
 		pr_err("inserted but not found, old=%lx, new=%lx\n", old, new);
 
 	pr_info("watchpoint=%p old=%lx new=%lx\n", (void *)watchpoint, old,
