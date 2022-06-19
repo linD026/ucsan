@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <ucsan/unify.h>
 #include <ucsan/report.h>
 #include <ucsan/ucsan.h>
@@ -6,6 +7,7 @@
 #include <ucsan/spinlock.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <execinfo.h>
 
 #define STACK_BUF_SIZE 16
@@ -25,14 +27,15 @@ struct task_info {
 static DEFINE_SPINLOCK(task_container_lock);
 struct task_info *task_container[NR_UCSAN_SLOT * NR_UCSAN_WP] = { NULL };
 
-int task_pid(void)
+static __always_inline int task_pid(void)
 {
-	return 0;
+	int pid = (int) getpid();
+	return pid;
 }
 
-int smp_processor_id()
+static __always_inline int smp_processor_id()
 {
-	return 0;
+	return sched_getcpu();
 }
 
 static __always_inline void collect_stack_info(char ***stack_info, int *nptrs)

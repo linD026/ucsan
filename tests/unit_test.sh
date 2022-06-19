@@ -90,6 +90,7 @@ function unify {
 
 		# Remove the generated file
 		rm -f report.log
+		rm -f ucsan_report.log
 		rm -f unify
 		print_unit_name "unify"
 		make -C $DIR clean quiet=1 --no-print-directory
@@ -100,6 +101,7 @@ function unify {
 
 	# Remove the generated file
 	rm -f unify.log
+	rm -f ucsan_report.log
 	rm -f unify
 	print_unit_name "unify"
 }
