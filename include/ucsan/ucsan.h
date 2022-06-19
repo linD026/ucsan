@@ -32,6 +32,6 @@
 #define UCSAN_ACCESS_COMPOUND 0x2
 
 #define type_expect_write(type) \
-	(type == (UCSAN_ACCESS_WRITE | UCSAN_ACCESS_COMPOUND))
+	(type & (UCSAN_ACCESS_WRITE | UCSAN_ACCESS_COMPOUND))
 
 #endif /* __UCSAN_UCSAN_H__ */

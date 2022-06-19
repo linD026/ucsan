@@ -12,6 +12,7 @@ CFLAGS+=-Wall
 CFLAGS+=-O1
 # Position Independent Code suitable for use in a shared library.
 CFLAGS+=-fPIC
+CFLAGS+=-rdynamic
 CFLAGS+=-D'UCSAN_NR_CPU=$(nr_cpu)'
 CFLAGS+=-D'UCSAN_NR_WATCHPOINT'=$(nr_wp)
 
@@ -23,6 +24,7 @@ SRC:=src/core.c
 SRC+=src/unify.c
 LIB:=lib/per_cpu.c
 TEST:=tests/test_watchpoint.c
+TEST+=tests/test_unify.c
 
 OBJ=$(SRC:.c=.o)
 OBJ+=$(LIB:.c=.o)

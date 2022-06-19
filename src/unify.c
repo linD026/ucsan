@@ -23,7 +23,7 @@ struct task_info {
 };
 
 static DEFINE_SPINLOCK(task_container_lock);
-struct task_info *task_container[NR_UCSAN_SLOT * NR_UCSAN_WP];
+struct task_info *task_container[NR_UCSAN_SLOT * NR_UCSAN_WP] = { NULL };
 
 int task_pid(void)
 {
@@ -35,7 +35,7 @@ int smp_processor_id()
 	return 0;
 }
 
-void collect_stack_info(char ***stack_info, int *nptrs)
+static __always_inline void collect_stack_info(char ***stack_info, int *nptrs)
 {
 	void *buf[STACK_BUF_SIZE];
 
@@ -51,7 +51,7 @@ static int unify_task_container_producer(void *ptr, size_t size,
 	struct task_info **task_con_pos = NULL;
 	struct task_info *task = malloc(sizeof(struct task_info));
 	if (!task)
-		return -1;
+		return ret;
 
 	task->pid = task_pid();
 	task->cpuid = smp_processor_id();
@@ -71,7 +71,8 @@ static int unify_task_container_producer(void *ptr, size_t size,
 			*task_con_pos = task;
 			ret = 0;
 			break;
-		} else if ((*task_con_pos)->ptr == task->ptr) {
+		} else if ((*task_con_pos)->ptr == task->ptr &&
+			   (*task_con_pos)->size == task->size) {
 			// TODO: handle the range of object
 			list_add(&task->head, &(*task_con_pos)->head);
 			ret = 0;
@@ -93,9 +94,8 @@ static struct task_info *unify_task_conatainer_consumer(void *ptr, size_t size)
 	spin_lock(&task_container_lock);
 	for (i = 0; i < NR_UCSAN_WP; i++) {
 		task_con_pos = &task_container[slot + i];
-
-		if (!(*task_con_pos) && (*task_con_pos)->ptr == task->ptr &&
-		    (*task_con_pos)->size == task->size) {
+		if (*task_con_pos && (*task_con_pos)->ptr == ptr &&
+		    (*task_con_pos)->size == size) {
 			task = *task_con_pos;
 			*task_con_pos = NULL;
 			break;
@@ -117,37 +117,63 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 		  unsigned long new_value)
 {
 	int i;
-	struct list_head *tmp, *n;
-	struct task_info *task,
+	struct list_head *pos, *n;
+	struct task_info current, *task,
 		*head_task = unify_task_conatainer_consumer((void *)ptr, size);
-	if (!task) {
+	if (!head_task) {
 		printf("unify report(): cannot find the task\n");
 		return;
 	}
 
 	report_init();
 
-	report_print("BUG: UCSAN: data-race in");
-	list_for_each (tmp, &head_task->head) {
-		task = container_of(tmp, struct task_info, head);
-		report_print(" %p ", (void *)task->ip);
+	report_print("BUG: UCSAN: data-race in ");
+	list_for_each (pos, &head_task->head) {
+		task = container_of(pos, struct task_info, head);
+		report_print("%p / ", (void *)task->ip);
 	}
-	report_print("\n\n");
+	report_print("%p / %p\n\n", (void *)ip, (void *)head_task->ip);
 
-	list_for_each (tmp, &head_task->head) {
-		task = container_of(tmp, struct task_info, head);
-		report_print("%s to 0x%px of %zu bytes by %d on cpu %d:\n",
-			     type_expect_write(task->access_type) ? "write" :
-								    "read",
-			     task->ptr, task->size, task->pid, task->cpuid);
+#define report_task_print(task)                                               \
+	report_print("%s to 0x%px of %zu bytes by %d on cpu %d:\n",           \
+		     type_expect_write(task->access_type) ? "write" : "read", \
+		     task->ptr, task->size, task->pid, task->cpuid);          \
+	for (i = 0; i < task->nr_stack_info; i++)                             \
+		report_print("  %s\n", task->stack_info[i]);                  \
+	report_print("\n");
 
-		for (i = 0; i < task->nr_stack_info; i++)
-			report_print("  %s\n", task->stack_info[i]);
-		report_print("\n");
+	current.pid = task_pid();
+	current.cpuid = smp_processor_id();
+	current.access_type = type;
+	current.ptr = (void *)ptr;
+	current.size = size;
+	current.ip = ip;
+	collect_stack_info(&current.stack_info, &current.nr_stack_info);
+	report_task_print((&current));
+
+	report_task_print(head_task);
+
+	list_for_each (pos, &head_task->head) {
+		task = container_of(pos, struct task_info, head);
+		report_task_print(task);
 	}
+
+#undef report_task_print
 
 	report_print("value changed: 0x%0lx -> 0x%0lx\n\n", old_value,
 		     new_value);
 
 	report_exit();
+
+	list_for_each_safe (pos, n, &head_task->head) {
+		task = container_of(pos, struct task_info, head);
+		list_del(&task->head);
+		free(task->stack_info);
+		free(task);
+	}
+	free(head_task);
+	free(current.stack_info);
 }
+
+#define __UT_UNIFY
+#include <unit_test.h>
