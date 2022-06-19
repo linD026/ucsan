@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 #define UCSAN_REPORT_FILE_NAME "ucsan_report.log"
-FILE *UCSAN_REPORT_FILE = NULL;
 
 /*
  * To exclude the unit test detection, we use stdout to print the data race
@@ -19,7 +18,7 @@ FILE *UCSAN_REPORT_FILE = NULL;
 	} while (0)
 
 #define report_init()                                           \
-	UCSAN_REPORT_FILE = fopen(UCSAN_REPORT_FILE_NAME, "w"); \
+	UCSAN_REPORT_FILE = fopen(UCSAN_REPORT_FILE_NAME, "w+"); \
 	report_print(                                           \
 		"==================================================================\n");
 

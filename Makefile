@@ -30,6 +30,7 @@ OBJ=$(SRC:.c=.o)
 OBJ+=$(LIB:.c=.o)
 
 ifeq ($(test), 1)
+CFLAGS+=-D'CONFIG_UNIT_TEST=y'
 CFLAGS+=-lpthread
 OBJ+=$(TEST:.c=.o)
 endif
