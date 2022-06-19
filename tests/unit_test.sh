@@ -48,7 +48,7 @@ function detect {
 
 	# Compile
 	local obj="$DIR/src/core.o"
-	gcc -o watchpoint test_watchpoint.o $obj -fsanitize=thread -lpthread
+	gcc -o watchpoint $obj -fsanitize=thread -lpthread
 
 	# Execute and pipe the stderr to log file
 	./watchpoint 2> detect.log
@@ -79,7 +79,7 @@ function unify {
 
 	# Compile
 	local obj="$DIR/src/unify.o"
-	gcc -o unify $obj -fsanitize=thread -lpthread  -rdynamic
+	gcc -o unify $obj -fsanitize=thread -lpthread -rdynamic
 
 	# Execute and pipe the stderr to log file
 	./unify 2> unify.log

@@ -60,14 +60,14 @@ struct report_check_table {
 	bool found;
 };
 
-struct report_check_table report_check_table[] = {
+static struct report_check_table report_check_table[] = {
 	[0] = { .substring = "BUG: UCSAN: data-race", .found = false },
 	[1] = { .substring = "write to", .found = false },
 	[2] = { .substring = "value changed:", .found = false },
 };
 static int nr_check_table = 3;
 
-int test_report(void)
+static int test_report(void)
 {
 	char *line = NULL;
 	size_t line_size = 0;

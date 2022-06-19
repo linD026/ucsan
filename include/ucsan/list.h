@@ -1,5 +1,5 @@
-#ifndef __LIST_H__
-#define __LIST_H__
+#ifndef __UCSAN_LIST_H__
+#define __UCSAN_LIST_H__
 
 #include <stddef.h>
 
@@ -53,4 +53,4 @@ static inline void list_del(struct list_head *node)
 	for (pos = (head)->next, n = pos->next; pos != (head); \
 	     pos = n, n = pos->next)
 
-#endif /* __LIST_H__ */
+#endif /* __UCSAN_LIST_H__ */

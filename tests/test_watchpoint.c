@@ -12,15 +12,14 @@
 
 extern atomic_ulong watchpoints[NR_UCSAN_SLOT * NR_UCSAN_WP];
 
-int test_setup_foo;
-atomic_int test_setup_flag;
+static int test_setup_foo;
 struct test_setup_report_struct {
 	void *ptr;
 	size_t size;
 	int type;
 	unsigned long ip;
 };
-struct test_setup_report_struct tsrs, unify_tsrs;
+static struct test_setup_report_struct tsrs, unify_tsrs;
 
 void unify_set_info(const volatile void *ptr, size_t size, int access_type,
 		    unsigned long ip, int watchpoint_idx)
@@ -60,7 +59,7 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 		       new_value);
 }
 
-int test_setup_report_thread(void *arg)
+static int test_setup_report_thread(void *arg)
 {
 	struct test_setup_report_struct *tsrs = arg;
 	atomic_ulong *watchpoint;

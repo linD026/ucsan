@@ -25,7 +25,7 @@ const static int nr_check_table = 3;
 
 static int foo;
 
-int write_func(void *unused)
+static int write_func(void *unused)
 {
 	int i;
 	for (i = 0; i < NR_ROUND / 2; i++)
@@ -34,7 +34,7 @@ int write_func(void *unused)
 	return 0;
 }
 
-int read_func(void *unused)
+static int read_func(void *unused)
 {
 	int i, a;
 	for (i = 0; i < NR_ROUND / 2; i++)
@@ -43,7 +43,7 @@ int read_func(void *unused)
 	return 0;
 }
 
-int check_data_race(void)
+static int check_data_race(void)
 {
 	char *line = NULL;
 	size_t line_size = 0;
@@ -87,7 +87,7 @@ int check_data_race(void)
 
 }
 
-int test_data_race(void)
+static int test_data_race(void)
 {
 	thrd_t p[NR_WORKER];
 	int i, j;

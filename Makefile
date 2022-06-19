@@ -23,16 +23,12 @@ endif
 SRC:=src/core.c
 SRC+=src/unify.c
 LIB:=lib/per_cpu.c
-TEST:=tests/test_watchpoint.c
-TEST+=tests/test_unify.c
-
 OBJ=$(SRC:.c=.o)
 OBJ+=$(LIB:.c=.o)
 
 ifeq ($(test), 1)
 CFLAGS+=-D'CONFIG_UNIT_TEST=y'
 CFLAGS+=-lpthread
-OBJ+=$(TEST:.c=.o)
 endif
 
 %.o: %.c

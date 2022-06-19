@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sched.h>
 #include <execinfo.h>
 
 #define STACK_BUF_SIZE 16
