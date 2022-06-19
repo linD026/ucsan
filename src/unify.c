@@ -29,7 +29,7 @@ struct task_info *task_container[NR_UCSAN_SLOT * NR_UCSAN_WP] = { NULL };
 
 static __always_inline int task_pid(void)
 {
-	int pid = (int) getpid();
+	int pid = (int)getpid();
 	return pid;
 }
 
@@ -138,7 +138,7 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 	report_print("%p / %p\n\n", (void *)ip, (void *)head_task->ip);
 
 #define report_task_print(task)                                               \
-	report_print("%s to 0x%px of %zu bytes by %d on cpu %d:\n",           \
+	report_print("%s to 0x%px of %zu bytes by task %d on cpu %d:\n",      \
 		     type_expect_write(task->access_type) ? "write" : "read", \
 		     task->ptr, task->size, task->pid, task->cpuid);          \
 	for (i = 0; i < task->nr_stack_info; i++)                             \
