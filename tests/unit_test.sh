@@ -73,12 +73,47 @@ function detect {
 	print_unit_name "detect"
 }
 
+function unify {
+	# Print unit test name
+	print_unit_name "unify"
+
+	# Compile
+	local obj="$DIR/src/unify.o"
+	gcc -o unify $obj -fsanitize=thread -lpthread  -rdynamic
+
+	# Execute and pipe the stderr to log file
+	./unify 2> unify.log
+
+	# Check " ERROR:" string and the count
+	report_log "unify subsystem" unify.log
+	if [[ $? -eq 1 ]]; then
+
+		# Remove the generated file
+		rm -f report.log
+		rm -f ucsan_report.log
+		rm -f unify
+		print_unit_name "unify"
+		make -C $DIR clean quiet=1 --no-print-directory
+
+		# exit 1 will general errors
+		exit 1
+	fi
+
+	# Remove the generated file
+	rm -f unify.log
+	rm -f ucsan_report.log
+	rm -f unify
+	print_unit_name "unify"
+}
+
+
 make -C $DIR all quiet=1 test=1 --no-print-directory
 echo ""
 echo " ------------------------------ unit test start ------------------------------ "
 
 # unit test function call here
 detect
+unify
 
 echo " ------------------------------ unit test end -------------------------------- "
 echo ""
