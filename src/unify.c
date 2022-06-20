@@ -24,7 +24,9 @@ struct task_info {
 	struct list_head head; /* head of the data race task */
 };
 
+static FILE *UCSAN_REPORT_FILE = NULL;
 static DEFINE_SPINLOCK(task_container_lock);
+static DEFINE_SPINLOCK(report_file_lock);
 struct task_info *task_container[NR_UCSAN_SLOT * NR_UCSAN_WP] = { NULL };
 
 static __always_inline int task_pid(void)
@@ -128,6 +130,7 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 		return;
 	}
 
+	spin_lock(&report_file_lock);
 	report_init();
 
 	report_print("BUG: UCSAN: data-race in ");
@@ -167,6 +170,7 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 		     new_value);
 
 	report_exit();
+	spin_unlock(&report_file_lock);
 
 	list_for_each_safe (pos, n, &head_task->head) {
 		task = container_of(pos, struct task_info, head);

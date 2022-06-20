@@ -106,6 +106,42 @@ function unify {
 	print_unit_name "unify"
 }
 
+function data_race {
+	# Print unit test name
+	print_unit_name "data race"
+
+	make -C $DIR clean quiet=1 --no-print-directory
+	make -C $DIR quiet=1 --no-print-directory
+
+	# Compile
+	local lib="$DIR/libucsan.a"
+	gcc -c test_data_race.c -fsanitize=thread
+	gcc -o data_race test_data_race.o $lib -lpthread -rdynamic
+
+	# Execute and pipe the stderr to log file
+	./data_race 2> data_race.log
+
+	# Check " ERROR:" string and the count
+	report_log "data race" data_race.log
+	if [[ $? -eq 1 ]]; then
+
+		# Remove the generated file
+		rm -f data_race.log
+		rm -f ucsan_report.log
+		rm -f data_race
+		print_unit_name "data race"
+		make -C $DIR clean quiet=1 --no-print-directory
+
+		# exit 1 will general errors
+		exit 1
+	fi
+
+	# Remove the generated file
+	rm -f data_race.log
+	rm -f ucsan_report.log
+	rm -f data_race
+	print_unit_name "data race"
+}
 
 make -C $DIR all quiet=1 test=1 --no-print-directory
 echo ""
@@ -114,6 +150,7 @@ echo " ------------------------------ unit test start --------------------------
 # unit test function call here
 detect
 unify
+data_race
 
 echo " ------------------------------ unit test end -------------------------------- "
 echo ""
