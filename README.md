@@ -11,7 +11,7 @@ $ make                  # Generate static library: libucsan.a
 $ make clean            # Delete generated files
 ```
 
-### Makefile Parameter 
+### Makefile Parameter
 
 * `nr_cpu` : number of cpu.
 * `nr_wp` : number of watchpoint slot.
@@ -22,7 +22,7 @@ $ make clean            # Delete generated files
 Add the static library `libucsan.a` to your project:
 
 ```bash
-$ gcc -o main main.c -L/path/to/libucsan.a -ltsan -fsanitize=thread
+$ gcc -o main main.c -L/path/to/libucsan/ -lucsan -fsanitize=thread
 ```
 
 Or you can move the `libucsan.a` to your project directory. Then:
