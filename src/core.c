@@ -148,11 +148,6 @@ static __always_inline void check_access(const volatile void *ptr, size_t size,
 				     type_expect_write(type));
 
 	/*
-	 * TODO: determine the watchpoint created.
-	 * ANd handle the data race detect.
-	 */
-
-	/*
 	 * Since we don't let the volatile access (which will be atomic
 	 * type) to call the check_access(). It doesn't need to check
 	 * the type we access is enable to create the watchpoint.
