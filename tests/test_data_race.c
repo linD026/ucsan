@@ -111,7 +111,7 @@ static int test_data_race(void)
 	pr_info("End testing\n");
 
 	if (!data_race) {
-		pr_err("TOTAL ROUND:%d: NOt FOUND DATA RACE\n", NR_ROUND);
+		pr_err("TOTAL ROUND:%d: NOT FOUND DATA RACE\n", NR_ROUND);
 		return -1;
 	}
 	return 0;
