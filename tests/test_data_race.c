@@ -84,7 +84,6 @@ static int check_data_race(void)
 	if (check_count != nr_check_table)
 		return -1;
 	return 0;
-
 }
 
 static int test_data_race(void)
@@ -98,7 +97,8 @@ static int test_data_race(void)
 
 	for (i = 0; i < NR_ROUND; i++) {
 		for (j = 0; j < NR_WORKER; j++)
-			thrd_create(&p[j], (j & 0x1) ? read_func : write_func, NULL);
+			thrd_create(&p[j], (j & 0x1) ? read_func : write_func,
+				    NULL);
 		for (j = 0; j < NR_WORKER; j++)
 			thrd_join(p[j], NULL);
 		if (!check_data_race()) {

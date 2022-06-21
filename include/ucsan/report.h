@@ -17,9 +17,9 @@
 		fprintf(stdout, fmt, ##__VA_ARGS__);                    \
 	} while (0)
 
-#define report_init()                                           \
+#define report_init()                                            \
 	UCSAN_REPORT_FILE = fopen(UCSAN_REPORT_FILE_NAME, "w+"); \
-	report_print(                                           \
+	report_print(                                            \
 		"==================================================================\n");
 
 #define report_exit()                                                                    \

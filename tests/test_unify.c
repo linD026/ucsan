@@ -26,13 +26,13 @@ int test_producer_consumer(void)
 
 	if (unify_task_container_producer(ptr, size, access_type, ip)) {
 		pr_err("task container producer\n");
-		ret = -1;
+		return -1;
 	}
 
 	task = unify_task_conatainer_consumer(ptr, size);
 	if (!task) {
 		pr_err("task container consumer\n");
-		ret = -1;
+		return -1;
 	}
 
 	if (task->ptr != ptr) {
