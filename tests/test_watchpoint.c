@@ -42,10 +42,12 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 
 #define check_match(utsrs_val, val, fmt)                                   \
 	do {                                                               \
-		if (unify_tsrs.utsrs_val != val)                           \
+		if (unify_tsrs.utsrs_val != val) {                         \
 			pr_err("unify_tsrs.utsrs_val(" fmt ") != val(" fmt \
 			       ")\n",                                      \
 			       unify_tsrs.utsrs_val, val);                 \
+			BUG_ON(1);                                         \
+		}                                                          \
 	} while (0)
 
 	check_match(ptr, ptr, "%p");
@@ -54,9 +56,11 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 	check_match(type, type, "%x");
 
 #undef check_match
-	if (old_value == new_value)
+	if (old_value == new_value) {
 		pr_err("old_value(%lx) == new_value(%lx)\n", old_value,
 		       new_value);
+		BUG_ON(1);
+	}
 }
 
 static int test_setup_report_thread(void *arg)
@@ -129,14 +133,18 @@ static int test_insert_find_watchpoint(void)
 				   type_expect_write(type));
 	BUG_ON(found_wp == NULL);
 
-	if (watchpoint != found_wp)
+	if (watchpoint != found_wp) {
 		pr_err("insert(idx=%ld,%p) != find(idx=%ld,%p)\n",
 		       watchpoint - watchpoints, (void *)watchpoint,
 		       found_wp - watchpoints, (void *)found_wp);
+		return -1;
+	}
 
 	new = atomic_load(found_wp);
-	if (old != new)
+	if (old != new) {
 		pr_err("inserted but not found, old=%lx, new=%lx\n", old, new);
+		return -1;
+	}
 
 	pr_info("watchpoint=%p old=%lx new=%lx\n", (void *)watchpoint, old,
 		new);
