@@ -29,7 +29,7 @@ int test_producer_consumer(void)
 		return -1;
 	}
 
-	task = unify_task_conatainer_consumer(ptr, size);
+	task = unify_task_container_consumer(ptr, size);
 	if (!task) {
 		pr_err("task container consumer\n");
 		return -1;

@@ -96,7 +96,7 @@ static int unify_task_container_producer(void *ptr, size_t size,
 	return ret;
 }
 
-static struct task_info *unify_task_conatainer_consumer(void *ptr, size_t size)
+static struct task_info *unify_task_container_consumer(void *ptr, size_t size)
 {
 	const unsigned long slot = WP_SLOT((unsigned long)ptr);
 	int i;
@@ -131,7 +131,7 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 	int i;
 	struct list_head *pos, *n;
 	struct task_info current, *task,
-		*head_task = unify_task_conatainer_consumer((void *)ptr, size);
+		*head_task = unify_task_container_consumer((void *)ptr, size);
 	if (!head_task) {
 		printf("unify report(): cannot find the task\n");
 		return;
