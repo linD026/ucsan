@@ -14,7 +14,8 @@
 #define STACK_BUF_SIZE 16
 
 struct task_info {
-	pid_t pid;
+	int pid;
+	int tid;
 	int cpuid;
 	int access_type; /* read:true(1), write:false(0) */
 	void *ptr; /* Address of data race object */
@@ -32,8 +33,12 @@ struct task_info *task_container[NR_UCSAN_SLOT * NR_UCSAN_WP] = { NULL };
 
 static __always_inline int task_pid(void)
 {
-	int pid = (int)getpid();
-	return pid;
+	return (int)getpid();
+}
+
+static __always_inline int task_tid(void)
+{
+	return (int)gettid();
 }
 
 static __always_inline int smp_processor_id()
@@ -60,6 +65,7 @@ static int unify_task_container_producer(void *ptr, size_t size,
 		return ret;
 
 	task->pid = task_pid();
+	task->tid = task_tid();
 	task->cpuid = smp_processor_id();
 	task->access_type = access_type;
 	task->ptr = ptr;
@@ -142,14 +148,16 @@ void unify_report(const volatile void *ptr, size_t size, int type,
 	report_print("%p / %p\n\n", (void *)ip, (void *)head_task->ip);
 
 #define report_task_print(task)                                               \
-	report_print("%s to 0x%px of %zu bytes by task %d on cpu %d:\n",      \
+	report_print("%s to %px of %zu bytes by task %d::%d on cpu %d:\n",    \
 		     type_expect_write(task->access_type) ? "write" : "read", \
-		     task->ptr, task->size, task->pid, task->cpuid);          \
+		     task->ptr, task->size, task->pid, task->tid,             \
+		     task->cpuid);                                            \
 	for (i = 0; i < task->nr_stack_info; i++)                             \
 		report_print("  %s\n", task->stack_info[i]);                  \
 	report_print("\n");
 
 	current.pid = task_pid();
+	current.tid = task_tid();
 	current.cpuid = smp_processor_id();
 	current.access_type = type;
 	current.ptr = (void *)ptr;
