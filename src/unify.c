@@ -41,7 +41,7 @@ static __always_inline int task_tid(void)
 	return (int)gettid();
 }
 
-static __always_inline int smp_processor_id()
+static __always_inline int smp_processor_id(void)
 {
 	return sched_getcpu();
 }
