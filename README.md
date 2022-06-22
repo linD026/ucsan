@@ -22,11 +22,13 @@ $ make clean            # Delete generated files
 Add the static library `libucsan.a` to your project:
 
 ```bash
-$ gcc -o main main.c -L/path/to/libucsan/ -lucsan -fsanitize=thread
+$ gcc -c main.c -fsanitize=thread
+$ gcc -o main main.o -L/path/to/libucsan/ -lucsan -rdynamic -pthread
 ```
 
 Or you can move the `libucsan.a` to your project directory. Then:
 
 ```bash
-$ gcc -o main main.c libucsan.a -fsanitize=thread
+$ gcc -c main.c -fsanitize=thread
+$ gcc -o main main.o libucsan.a -rdynamic -pthread
 ```
