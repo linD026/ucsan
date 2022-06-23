@@ -26,6 +26,7 @@ static inline unsigned long __get_ms(void)
  * own name.
  */
 
+#undef __FILE_NAME__
 #define __FILE_NAME__ __FILE__
 
 #define pr_err(fmt, ...)                                               \
