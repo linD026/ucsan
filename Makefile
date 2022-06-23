@@ -16,7 +16,7 @@ CFLAGS+=-rdynamic
 CFLAGS+=-D'UCSAN_NR_CPU=$(nr_cpu)'
 CFLAGS+=-D'UCSAN_NR_WATCHPOINT'=$(nr_wp)
 
-ifeq ($(CC), gcc)
+ifneq ($(CC),)
 CFLAGS+=-D'CONFIG_GCC=y'
 endif
 
