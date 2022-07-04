@@ -1,5 +1,11 @@
 # ucsan
 
+The User Concurrency Sanitizer (UCSAN) is the watchpoint-based data race detector.
+It uses the [thread sanitizer](https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual) interface in [Clang](https://releases.llvm.org/3.8.0/tools/clang/docs/ThreadSanitizer.html) (v3.2+) and [GCC](https://gcc.gnu.org/gcc-4.8/changes.html) (v4.8+) to determine whether the variable data race.
+
+Currently, it only will check the non-volatile type of variable access.
+In other words, all the variables with thread-safety operations can declare as volatile types to avoid data race checking.
+
 ## Get start
 
 ## Build
