@@ -9,7 +9,7 @@
 
 #error "non-support"
 
-#endif /* GCC or Other compiler config */
+#endif /* compiler config */
 
 /* x86 specific */
 #define COHERENCE_SIZE 128
